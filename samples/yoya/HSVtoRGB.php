@@ -1,93 +1,77 @@
 <?php
 
-/**
- * HSV配列 を RGB配列 へ変換します
- *
- * @param   array   $arr            array(h, s, v) ※h は 0～360の数値、s/v は 0～255 の数値
- * @return  array   array(r, g, b) ※ r/g/b は 0～255 の数値
- http://d.hatena.ne.jp/ja9/20100831/1283181870
- */
-
-function HSVtoRGB($arr)
+function RGBtoHSV( $R, $G, $B )
 {
-    $r = 0; // 0..255
-    $g = 0; // 0..255
-    $b = 0; // 0..255
+	$R /= 255;
+	$G /= 255;
+	$B /= 255;
 
-    while ($arr[0] < 0) {
-      $arr[0] += 360;
-    }
+	$maxRGB = max ( $R, $G, $B );
+	$minRGB = min ( $R, $G, $B );
+	$chroma = $maxRGB - $minRGB;
 
-    $arr[0] = $arr[0] % 360;
+	$resV = round ( 100 * $maxRGB );
 
-    // 特別な場合
-    if ($arr[1] == 0) {
-        // S = 0.0
-        // → RGB は V に等しい
-        return array(
-            round($arr[2]),
-            round($arr[2]),
-            round($arr[2]),
-        );
-    }
+	if ( $chroma == 0 )
+	{
+		return [ 0, 0, $resV ];
+	}
 
-    $arr[1] = $arr[1] / 255;
+	if ( $R == $minRGB )
+	{
+		$h = 3 - ( ( $G - $B ) / $chroma );
+	} 
+	elseif ( $B == $minRGB )
+	{
+		$h = 1 - ( ( $R - $G ) / $chroma );
+	}
+	else
+	{
+		$h = 5 - ( ( $B - $R ) / $chroma );
+	}
+		
+		
+	return [ 60 * $h, 100 * ( $chroma / $maxRGB ), $resV ];
+}
 
 
-    // Hi = floor(H/60) mod 6
-    $i = floor($arr[0] / 60) % 6;
-    // f = H/60 - Hi
-    $f = ($arr[0] / 60) - $i;
 
-    // p = V (1 - S)
-    $p = $arr[2] * (1 - $arr[1]);
-    // q = V (1 - fS)
-    $q = $arr[2] * (1 - $f * $arr[1]);
-    // t = V (1 - (1 - f) S)
-    $t = $arr[2] * (1 - (1 - $f) * $arr[1]);
-
-    switch ($i) {
-        case 0 :
-            // R = V, G = t, B = p
-            $r = $arr[2];
-            $g = $t;
-            $b = $p;
-            break;
-        case 1 :
-            // R = q, G = V, B = p
-            $r = $q;
-            $g = $arr[2];
-            $b = $p;
-            break;
-        case 2 :
-            // R = p, G = V, B = t
-            $r = $p;
-            $g = $arr[2];
-            $b = $t;
-            break;
-        case 3 :
-            // R = p, G = q, B = V
-            $r = $p;
-            $g = $q;
-            $b = $arr[2];
-            break;
-        case 4 :
-            // R = t, G = p, B = V
-            $r = $t;
-            $g = $p;
-            $b = $arr[2];
-            break;
-        case 5 :
-            // R = V, G = p, B = q
-            $r = $arr[2];
-            $g = $p;
-            $b = $q;
-            break;
-    }
-
-    return array(
-        round($r), // r
-        round($g), // g
-        round($b), // b
-    );
+function HSVtoRGB( $H, $S, $V )
+{
+	if ( $S == 0 )
+	{
+		$c = round ( 256 * $V / 100 );
+		
+		return [ $c, $c, $c ];
+	}
+	
+	$i = floor ( ( $H / 60 ) % 6 );
+	
+	$min = ( ( 100 - $S ) * $V ) / 100;
+	
+	$a = ( $V - $min ) * ( ( $H % 60 ) / 60 );
+	
+	$inc = $min + $a;
+	
+	$dec = $V - $a;
+	
+	[ $R, $G, $B ] = [
+		0 => static function ( $v, $m, $i, $d ): array { return [ $v, $i, $m ]; },
+		1 => static function ( $v, $m, $i, $d ): array { return [ $d, $v, $m ]; },
+		2 => static function ( $v, $m, $i, $d ): array { return [ $m, $v, $i ]; },
+		3 => static function ( $v, $m, $i, $d ): array { return [ $m, $d, $v ]; },
+		4 => static function ( $v, $m, $i, $d ): array { return [ $i, $m, $v ]; },
+		5 => static function ( $v, $m, $i, $d ): array { return [ $v, $m, $d ]; },
+	][$i]( 
+		$V,
+		$min, 
+		$inc,
+		$dec,
+	);
+	
+	return [
+		round ( 255 / 100 * $R ),
+		round ( 255 / 100 * $G ),
+		round ( 255 / 100 * $B ),
+	];
 }
