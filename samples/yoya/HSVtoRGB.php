@@ -1,6 +1,6 @@
 <?php
 
-function RGBtoHSV( $R, $G, $B )
+function rgb2hsv( $R, $G, $B )
 {
 	$R /= 255;
 	$G /= 255;
@@ -31,12 +31,16 @@ function RGBtoHSV( $R, $G, $B )
 	}
 		
 		
-	return [ 60 * $h, 100 * ( $chroma / $maxRGB ), $resV ];
+	return [ 
+		round ( 60 * $h ), 
+		round ( 100 * ( $chroma / $maxRGB ) ), 
+		$resV
+	];
 }
 
 
 
-function HSVtoRGB( $H, $S, $V )
+function hsv2rgb( $H, $S, $V )
 {
 	if ( $S == 0 )
 	{
